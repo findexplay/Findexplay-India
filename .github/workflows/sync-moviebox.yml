@@ -1,9 +1,9 @@
 name: Sync MovieBox Plugins JSON
 
 on:
-  schedule:
-    - cron: '0 * * * *'
-  workflow_dispatch: 
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   sync:
@@ -11,44 +11,30 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout Your Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Fetch and Filter MovieBox Plugins
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Download and Filter Plugins
         run: |
-          echo "Fetching plugins.json from upstream..."
-          curl -s https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/main/plugins.json -o upstream_plugins.json
-
-          python3 -c '
+          curl -s https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/main/plugins.json -o upstream.json
+          python3 -c "
 import json
+with open('upstream.json', 'r') as f:
+    data = json.load(f)
+filtered = [p for p in data if 'MovieBox' in p.get('name', '')]
+with open('plugins.json', 'w') as f:
+    json.dump(filtered, f, indent=2)
+"
+          rm -f upstream.json
 
-try:
-    with open("upstream_plugins.json", "r") as f:
-        data = json.load(f)
-
-    filtered_plugins = [p for p in data if "MovieBox" in p.get("name", "")]
-
-    with open("plugins.json", "w") as f:
-        json.dump(filtered_plugins, f, indent=2)
-
-    print(f"Successfully generated plugins.json with {len(filtered_plugins)} plugin(s).")
-except Exception as e:
-    print("Error processing json:", e)
-'
-          rm -f upstream_plugins.json
-
-      - name: Commit and Push Changes Manually
+      - name: Commit and Push
         run: |
           git config --global user.name "GitHub Action Bot"
           git config --global user.email "action@github.com"
-          
           git add plugins.json
-          
-          if git diff --staged --quiet; then
-            echo "No changes to commit."
-          else
-            git commit -m "Hourly Sync: Updated MovieBox index from upstream"
-            git push origin main
-          fi
-          
-
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-sync MovieBox plugins.json" && git push)
