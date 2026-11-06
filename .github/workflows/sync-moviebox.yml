@@ -40,12 +40,18 @@ jobs:
           
           rm -rf upstream-repo
 
-      - name: Commit and Push Changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Hourly Sync: Updated MovieBox files from upstream"
-          branch: main
-          commit_user_name: "GitHub Action Bot"
-          commit_user_email: "action@github.com"
-          file_pattern: "builds/* Logos/*"
-          push_options: '--force'
+      - name: Commit and Push Changes Manually
+        run: |
+          git config --global user.name "GitHub Action Bot"
+          git config --global user.email "action@github.com"
+          
+          git add builds/ Logos/
+          
+          # മാറ്റങ്ങൾ ഉണ്ടെങ്കിൽ മാത്രം കമ്മിറ്റ് ചെയ്യുക
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Hourly Sync: Updated MovieBox files from upstream"
+            git push origin main --force
+          fi
+          
