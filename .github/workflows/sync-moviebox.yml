@@ -2,7 +2,6 @@ name: Sync MovieBox Plugins JSON
 
 on:
   schedule:
-    # ഓരോ 1 മണിക്കൂറിലും ഓട്ടോമാറ്റിക്കായി ചെക്ക് ചെയ്ത് ഇൻഡക്സ് അപ്ഡേറ്റ് ചെയ്യും
     - cron: '0 * * * *'
   workflow_dispatch: 
 
@@ -50,3 +49,4 @@ except Exception as e:
             git commit -m "Hourly Sync: Updated MovieBox index from upstream"
             git push origin main --force
           fi
+          
