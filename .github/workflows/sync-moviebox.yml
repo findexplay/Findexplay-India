@@ -1,0 +1,50 @@
+name: Sync MovieBox Files from Upstream
+
+on:
+  schedule:
+    # ഓരോ 1 മണിക്കൂർ ഇടവിട്ടും ഓട്ടോമാറ്റിക് ആയി അപ്ഡേറ്റ് ചെക്ക് ചെയ്യും
+    - cron: '0 * * * *'
+  workflow_dispatch: 
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Your Repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Upstream (Original) Repository
+        uses: actions/checkout@v4
+        with:
+          repository: NivinCNC/CNCVerse-Cloud-Stream-Extension
+          path: upstream-repo
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy Only MovieBox Files
+        run: |
+          echo "Copying MovieBox files..."
+          mkdir -p builds
+          
+          if [ -f "upstream-repo/builds/MovieBoxProvider.cs3" ]; then
+            cp upstream-repo/builds/MovieBoxProvider.cs3 builds/
+          fi
+          
+          if [ -f "upstream-repo/builds/MovieBoxProviderIN.cs3" ]; then
+            cp upstream-repo/builds/MovieBoxProviderIN.cs3 builds/
+          fi
+
+          mkdir -p Logos/MovieBoxProvider
+          if [ -d "upstream-repo/Logos/MovieBoxProvider" ]; then
+            cp -r upstream-repo/Logos/MovieBoxProvider/* Logos/MovieBoxProvider/
+          fi
+          
+          rm -rf upstream-repo
+
+      - name: Commit and Push Changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Hourly Sync: Updated MovieBox files from upstream"
+          branch: main
+          commit_user_name: "GitHub Action Bot"
+          commit_user_email: "action@github.com"
+          
