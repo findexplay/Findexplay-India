@@ -2,7 +2,6 @@ name: Sync MovieBox Files from Upstream
 
 on:
   schedule:
-    # ഓരോ 1 മണിക്കൂർ ഇടവിട്ടും ഓട്ടോമാറ്റിക് ആയി അപ്ഡേറ്റ് ചെക്ക് ചെയ്യും
     - cron: '0 * * * *'
   workflow_dispatch: 
 
@@ -47,7 +46,6 @@ jobs:
           
           git add builds/ Logos/
           
-          # മാറ്റങ്ങൾ ഉണ്ടെങ്കിൽ മാത്രം കമ്മിറ്റ് ചെയ്യുക
           if git diff --staged --quiet; then
             echo "No changes to commit."
           else
