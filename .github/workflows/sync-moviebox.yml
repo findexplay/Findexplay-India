@@ -8,6 +8,8 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Your Repository
         uses: actions/checkout@v4
@@ -15,7 +17,7 @@ jobs:
       - name: Fetch and Filter MovieBox Plugins
         run: |
           echo "Fetching plugins.json from upstream..."
-          curl -s https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/plugins.json -o upstream_plugins.json
+          curl -s https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/main/plugins.json -o upstream_plugins.json
 
           python3 -c '
 import json
@@ -24,7 +26,6 @@ try:
     with open("upstream_plugins.json", "r") as f:
         data = json.load(f)
 
-    # MovieBox എന്ന് പേരുള്ള എക്സ്റ്റൻഷൻ മാത്രം അരിച്ചെടുക്കുന്നു
     filtered_plugins = [p for p in data if "MovieBox" in p.get("name", "")]
 
     with open("plugins.json", "w") as f:
@@ -47,7 +48,6 @@ except Exception as e:
             echo "No changes to commit."
           else
             git commit -m "Hourly Sync: Updated MovieBox index from upstream"
-            git push origin main --force
+            git push origin main
           fi
           
-
