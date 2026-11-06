@@ -1,7 +1,8 @@
-name: Sync MovieBox Files from Upstream
+name: Sync MovieBox Plugins JSON
 
 on:
   schedule:
+    # ഓരോ 1 മണിക്കൂറിലും ഓട്ടോമാറ്റിക്കായി ചെക്ക് ചെയ്ത് ഇൻഡക്സ് അപ്ഡേറ്റ് ചെയ്യും
     - cron: '0 * * * *'
   workflow_dispatch: 
 
@@ -12,44 +13,40 @@ jobs:
       - name: Checkout Your Repository
         uses: actions/checkout@v4
 
-      - name: Checkout Upstream (Original) Repository
-        uses: actions/checkout@v4
-        with:
-          repository: NivinCNC/CNCVerse-Cloud-Stream-Extension
-          path: upstream-repo
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Copy Only MovieBox Files
+      - name: Fetch and Filter MovieBox Plugins
         run: |
-          echo "Copying MovieBox files..."
-          mkdir -p builds
-          
-          if [ -f "upstream-repo/builds/MovieBoxProvider.cs3" ]; then
-            cp upstream-repo/builds/MovieBoxProvider.cs3 builds/
-          fi
-          
-          if [ -f "upstream-repo/builds/MovieBoxProviderIN.cs3" ]; then
-            cp upstream-repo/builds/MovieBoxProviderIN.cs3 builds/
-          fi
+          echo "Fetching plugins.json from upstream..."
+          curl -s https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/plugins.json -o upstream_plugins.json
 
-          mkdir -p Logos/MovieBoxProvider
-          if [ -d "upstream-repo/Logos/MovieBoxProvider" ]; then
-            cp -r upstream-repo/Logos/MovieBoxProvider/* Logos/MovieBoxProvider/
-          fi
-          
-          rm -rf upstream-repo
+          python3 -c '
+import json
+
+try:
+    with open("upstream_plugins.json", "r") as f:
+        data = json.load(f)
+
+    # MovieBox എന്ന് പേരുള്ള എക്സ്റ്റൻഷൻ മാത്രം അരിച്ചെടുക്കുന്നു
+    filtered_plugins = [p for p in data if "MovieBox" in p.get("name", "")]
+
+    with open("plugins.json", "w") as f:
+        json.dump(filtered_plugins, f, indent=2)
+
+    print(f"Successfully generated plugins.json with {len(filtered_plugins)} plugin(s).")
+except Exception as e:
+    print("Error processing json:", e)
+'
+          rm -f upstream_plugins.json
 
       - name: Commit and Push Changes Manually
         run: |
           git config --global user.name "GitHub Action Bot"
           git config --global user.email "action@github.com"
           
-          git add builds/ Logos/
+          git add plugins.json
           
           if git diff --staged --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "Hourly Sync: Updated MovieBox files from upstream"
+            git commit -m "Hourly Sync: Updated MovieBox index from upstream"
             git push origin main --force
           fi
-          
