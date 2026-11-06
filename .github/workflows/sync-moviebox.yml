@@ -47,4 +47,5 @@ jobs:
           branch: main
           commit_user_name: "GitHub Action Bot"
           commit_user_email: "action@github.com"
+          file_pattern: "builds/* Logos/*"
           
