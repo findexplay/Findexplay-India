@@ -1,17 +1,18 @@
 name: Sync MovieBox Plugins JSON
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
-  sync:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -19,22 +20,22 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Download and Filter Plugins
+      - name: Fetch and Filter JSON
         run: |
           curl -s https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/main/plugins.json -o upstream.json
           python3 -c "
-import json
-with open('upstream.json', 'r') as f:
-    data = json.load(f)
-filtered = [p for p in data if 'MovieBox' in p.get('name', '')]
-with open('plugins.json', 'w') as f:
-    json.dump(filtered, f, indent=2)
-"
+          import json
+          with open('upstream.json', 'r') as f:
+              data = json.load(f)
+          filtered = [p for p in data if 'MovieBox' in p.get('name', '')]
+          with open('plugins.json', 'w') as f:
+              json.dump(filtered, f, indent=2)
+          "
           rm -f upstream.json
 
-      - name: Commit and Push
+      - name: Commit and push if changed
         run: |
-          git config --global user.name "GitHub Action Bot"
-          git config --global user.email "action@github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add plugins.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-sync MovieBox plugins.json" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Sync MovieBox plugins.json" && git push)
